@@ -70,3 +70,28 @@ class ApiAllTicket:
         except requests.RequestException as e:
             print(f"Error reserving seats: {e}")
             return None
+
+    def handler_reserve_festival(self, perform_id, zone_id, round_id, tickets):
+        """ดำเนินการจองที่นั่ง"""
+        tickets_str = str(tickets)
+        url = f'{self.base_url}handler-reserve'
+        payload = {
+            'performId': perform_id,
+            'roundId': round_id,
+            'zoneId': zone_id,
+            'screenLabel': zone_id,
+            'seatTo': {
+                'seatType': 'NONSEAT',
+                'seatAmount': tickets_str
+            },
+            'shirtTo': [],
+        }
+
+        try:
+            response = requests.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json().get("data", {}).get("uuid")
+
+        except requests.RequestException as e:
+            print(f"Error reserving seats: {e}")
+            return None

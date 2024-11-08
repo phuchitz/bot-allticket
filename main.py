@@ -9,9 +9,6 @@ from bin.lib.ApiFindById import ApiFindById
 # สร้างหน้าต่างหลัก
 root = tk.Tk()
 
-# bg image
-background_image = tk.PhotoImage(file="bg.png")
-
 root.title("BOT TICKET")
 root.geometry("500x600")
 root.configure(bg="#f0f0f0")
@@ -47,9 +44,6 @@ zone_entry.grid(row=3, column=1, sticky="w", padx=10)
 tk.Label(root, text="Date (R1 format)", font=font, fg=text_color, bg=bg_color).grid(row=4, column=0, sticky="e", padx=10, pady=5)
 date_entry = tk.Entry(root, width=10, font=font)
 date_entry.grid(row=4, column=1, sticky="w", padx=10)
-# checkbox_var = tk.BooleanVar()
-# date_checkbox = tk.Checkbutton(root, text="ล็อควันที่", variable=checkbox_var, font=font, fg=text_color, bg=bg_color)
-# date_checkbox.grid(row=4, column=1, sticky="e")
 
 # ฟิลด์สำหรับ Total Ticket
 tk.Label(root, text="Total Ticket", font=font, fg=text_color, bg=bg_color).grid(row=5, column=0, sticky="e", padx=10, pady=5)
@@ -63,20 +57,8 @@ time_entry = tk.Entry(root, width=10, font=font)
 time_entry.grid(row=6, column=1, sticky="w", padx=10)
 time_entry.insert(0, datetime.now().strftime("%H:%M:%S"))
 set_time_var = tk.BooleanVar()
-set_time_checkbox = tk.Checkbutton(root, text="ตั้งเวลา", variable=set_time_var, font=font, fg=text_color, bg=bg_color)
+set_time_checkbox = tk.Checkbutton(root, text="Set timer", variable=set_time_var, font=font, fg=text_color, bg=bg_color)
 set_time_checkbox.grid(row=6, column=1)
-
-# # ฟิลด์สำหรับการเลือกประเภทบัตร
-# type_label = tk.Label(root, text="ประเภทบัตร", font=font, fg=text_color, bg=bg_color)
-# type_label.grid(row=7, column=0, sticky="e", padx=10, pady=5)
-# ticket_type_combo = ttk.Combobox(root, values=["เลือกหมายเลขโซนที่ต้องการ", "ไม่เลือกโซน", "ไม่มีโซน (Festival)"], font=font, width=27)
-# ticket_type_combo.grid(row=7, column=1, padx=10, pady=5)
-# ticket_type_combo.current(0)
-#
-# # ช่องติ๊ก All in Ticket
-# all_in_ticket_var = tk.BooleanVar()
-# all_in_ticket_checkbox = tk.Checkbutton(root, text="All in Ticket", variable=all_in_ticket_var, font=font, fg=text_color, bg=bg_color)
-# all_in_ticket_checkbox.grid(row=8, column=1, sticky="w", padx=10, pady=5)
 
 # ฟังก์ชันเพื่อเริ่มต้นการทำงานตามเวลาที่ตั้งไว้
 def start_at_scheduled_time():
@@ -114,19 +96,22 @@ def start_action():
     time_set = time_entry.get()
 
     # เรียกใช้ APIFindById เพื่อดึง event_id
-    api_find_by_id = ApiFindById(token)
-    event_id = api_find_by_id.get_event_id(name, token)
+    api_find_by_id = ApiFindById(token,name)
+    event_id = api_find_by_id.get_event_id(name)
 
     if event_id:
         # ใช้ event_id ที่ได้มาไปทำงานกับ ApiAllTicket
         api_all_ticket = ApiAllTicket(token, name)
-
-        # เรียกใช้ฟังก์ชันจาก ApiAllTicket
-        available_seats = api_all_ticket.get_seats(event_id, round_id, zone_id, int(tickets))
-
-        # ทำการจองที่นั่ง
-        number_uuid = api_all_ticket.handler_reserve(event_id, zone_id, round_id, available_seats)
-        status_text.insert("2.0", f"Reservation UUID: {number_uuid}. \n success.... \n")
+        if zone_id == "REG":
+            number_uuid = api_all_ticket.handler_reserve_festival(event_id, zone_id, round_id, int(tickets))
+            status_text.insert("2.0", f"Reservation UUID: {number_uuid}. \n success.... \n")
+        else:
+            # เรียกใช้ฟังก์ชันจาก ApiAllTicket
+            available_seats = api_all_ticket.get_seats(event_id, round_id, zone_id, int(tickets))
+            print(available_seats)
+            # ทำการจองที่นั่ง
+            number_uuid = api_all_ticket.handler_reserve(event_id, zone_id, round_id, available_seats)
+            status_text.insert("2.0", f"Reservation UUID: {number_uuid}. \n success.... \n")
 
     else:
         status_text.insert("2.0", "Failed to retrieve event ID.\n")
